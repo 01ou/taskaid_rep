@@ -9,7 +9,7 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
         SQLALCHEMY_TRACK_MODIFICATIONS=False  # 不要なトラッキングを無効化
     )
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydatabase.db'  # SQLiteデータベースのURIを設定
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///taskaid.db'  # SQLiteデータベースのURIを設定
 
     db = SQLAlchemy(app)
 
@@ -26,18 +26,25 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # モデルの定義
     class User(db.Model):
         id = db.Column(db.Integer, primary_key=True)
-        username = db.Column(db.String(80), unique=True, nullable=False)
-        password = db.Column(db.String(120), nullable=False)
+        username = db.Column(db.String(50), nullable=False)
+        password_hash = db.Column(db.String(100), nullable=False)
 
-    class Post(db.Model):
+    class Task(db.Model):
         id = db.Column(db.Integer, primary_key=True)
-        title = db.Column(db.String(120), nullable=False)
-        body = db.Column(db.Text, nullable=False)
-        author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-        author = db.relationship('User', backref=db.backref('posts', lazy=True))
+        title = db.Column(db.String(100), nullable=False)
+        subject_tag = db.Column(db.String(50), nullable=False)
+        user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+        user = db.relationship('User', backref=db.backref('tasks', lazy=True))
+
+    class TaskBody(db.Model):
+        id = db.Column(db.Integer, primary_key=True)
+        text_page_number = db.Column(db.Integer, nullable=True)
+        planned_completion_date = db.Column(db.DateTime, nullable=True)
+        completed = db.Column(db.Boolean, nullable=False, default=False)
+        task_id = db.Column(db.Integer, db.ForeignKey('task.id'), nullable=False)
+        task = db.relationship('Task', backref=db.backref('task_bodies', lazy=True))
 
     # データベースの初期化
     with app.app_context():
